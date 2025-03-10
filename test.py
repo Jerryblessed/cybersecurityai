@@ -5,122 +5,147 @@ import torch
 import cudf
 import cugraph
 import pandas as pd
-import matplotlib.pyplot as plt
-import requests
-from openai import OpenAI
 
-# Load database credentials securely
+from openai import AzureOpenAI
+
+
+# print(text_to_aql_to_text("What vulnerabilities are present in the graph?"))
+
+from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_community.graphs import ArangoGraph
+from langchain_community.chains.graph_qa.arangodb import ArangoGraphQAChain
+from langchain_core.tools import tool
+
+# Load database credentials securely using environment variables
 os.environ["DATABASE_HOST"] = os.getenv("DATABASE_HOST", "https://tutorials.arangodb.cloud:8529")
-os.environ["DATABASE_USERNAME"] = os.getenv("DATABASE_USERNAME", "TUTljyv8qse1qn9ddft3uq2y")
-os.environ["DATABASE_PASSWORD"] = os.getenv("DATABASE_PASSWORD", "TUTap9fgtadhotgarn6tss3")
-os.environ["DATABASE_NAME"] = os.getenv("DATABASE_NAME", "TUTzyvt1l9z12l6pyhwmyolb")
+os.environ["DATABASE_USERNAME"] = os.getenv("DATABASE_USERNAME", "TUT8ipacx2t02ebj95v26ioo")
+os.environ["DATABASE_PASSWORD"] = os.getenv("DATABASE_PASSWORD", "TUTb69rmmvlqygt7dceaxf8d")
+os.environ["DATABASE_NAME"] = os.getenv("DATABASE_NAME", "TUTnhcypojdm6nocid8h4x3v")
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY", "9I4UEJweVUdih04Uv8AXcAxs5H8jSQRfwaugcSQYHcI882wSpFvqJQQJ99BAACL93NaXJ3w3AAABACOGkv4f")
 
-# Azure OpenAI API setup
-api_base = "https://your-openai-instance.openai.azure.com"
+# Azure OpenAI API details
+
+# ------------------------------------------------------------------------------
+
+api_base = "https://thisisoajo.openai.azure.com/"  # Replace with your Azure OpenAI resource URL
 AZURE_MODEL = "gpt-4o"
-AZURE_API_KEY = os.environ["OPENAI_API_KEY"]
+AZURE_API_KEY = os.environ["OPENAI_API_KEY"]  # Using the same environment variable
+api_version = "2023-06-01-preview"
 
-# Debugging: Check if API credentials are loaded
-print(f"🔹 Azure API Key: {'Loaded' if AZURE_API_KEY else 'Missing'}")
-print(f"🔹 Azure API Base: {api_base}")
 
-# Function to interact with Azure OpenAI API
 def azure_chat(prompt):
     """Interact with GPT-4o via Azure OpenAI API."""
-    client = OpenAI(
+    client = AzureOpenAI(
         api_key=AZURE_API_KEY,
-        base_url=api_base
+        api_version=api_version,
+        base_url=f"{api_base}/openai/deployments/{AZURE_MODEL}"
     )
-    try:
-        response = client.chat.completions.create(
-            model=AZURE_MODEL,
-            messages=[
-                {"role": "system", "content": "A cybersecurity expert."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=500,
-            temperature=0.7,
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Error with OpenAI API: {e}"
+    response = client.chat.completions.create(
+        model=AZURE_MODEL,
+        messages=[
+            {"role": "system", "content": "A network engineer"},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=500,
+        temperature=0.7,
+    )
+    return response.choices[0].message.content.strip()
 
-# Function to load CSV data into Pandas DataFrames
-def load_csv_data():
-    cve_df = pd.read_csv("cve.csv")
-    products_df = pd.read_csv("products.csv")
-    vendor_products_df = pd.read_csv("vendor_product.csv")
-    vendors_df = pd.read_csv("vendors.csv")
-    return cve_df, products_df, vendor_products_df, vendors_df
+# Sample CSV Data (Only Four Entries)
+vulnerabilities = [
+    {"cve_id": "CVE-2019-16548", "mod_date": "2019-11-21 15:15:00", "pub_date": "2019-11-21 15:15:00", "cvss": 6.8, "cwe_code": "352", "cwe_name": "Cross-Site Request Forgery (CSRF)", "summary": "A cross-site request forgery vulnerability in Jenkins Google Compute Engine Plugin 4.1.1 and earlier."},
+    {"cve_id": "CVE-2019-16547", "mod_date": "2019-11-21 15:15:00", "pub_date": "2019-11-21 15:15:00", "cvss": 4.0, "cwe_code": "732", "cwe_name": "Incorrect Permission Assignment for Critical Resource", "summary": "Missing permission checks in various API endpoints in Jenkins Google Compute Engine Plugin."},
+    {"cve_id": "CVE-2019-16546", "mod_date": "2019-11-21 15:15:00", "pub_date": "2019-11-21 15:15:00", "cvss": 4.3, "cwe_code": "639", "cwe_name": "Authorization Bypass Through User-Controlled Key", "summary": "Jenkins Google Compute Engine Plugin does not verify SSH host keys, enabling man-in-the-middle attacks."},
+    {"cve_id": "CVE-2013-2092", "mod_date": "2019-11-20 21:22:00", "pub_date": "2019-11-20 21:15:00", "cvss": 4.3, "cwe_code": "79", "cwe_name": "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')", "summary": "Cross-site Scripting (XSS) in Dolibarr ERP/CRM 3.3.1 allows remote attackers to inject arbitrary web script."}
+]
 
-# Function to create a NetworkX vulnerability graph
-def create_vulnerability_graph(cve_df, products_df, vendor_products_df, vendors_df):
-    print("🔹 Creating vulnerability graph...")
+# Create a Cybersecurity Vulnerability Graph in NetworkX
+def create_vulnerability_graph():
     G = nx.Graph()
+    for vuln in vulnerabilities:
+        cve_id = vuln["cve_id"]
+        pub_date = vuln["pub_date"]
+        mod_date = vuln["mod_date"]
+        cwe_code = vuln["cwe_code"]
+        severity = vuln["cvss"]
+
+        # Add CVE Node
+        G.add_node(cve_id, severity=severity, summary=vuln["summary"])
+
+        # Add CWE Node & Edge
+        if cwe_code:
+            cwe_node = f"CWE-{cwe_code}"
+            G.add_node(cwe_node, name=vuln["cwe_name"])
+            G.add_edge(cve_id, cwe_node, relation="has_cwe")
+
+        # Add Date Nodes & Edges
+        G.add_node(pub_date, type="date")
+        G.add_edge(cve_id, pub_date, relation="published_on")
+
+        G.add_node(mod_date, type="date")
+        G.add_edge(cve_id, mod_date, relation="modified_on")
+
+        # Add CVSS Score Edge
+        severity_node = f"CVSS-{severity}"
+        G.add_node(severity_node, type="severity")
+        G.add_edge(cve_id, severity_node, relation="has_severity")
     
-    # Add CVEs as nodes
-    for _, row in cve_df.iterrows():
-        G.add_node(row['cve_id'], severity=row['cvss'], description=row['summary'])
-    
-    # Add product relationships
-    for _, row in products_df.iterrows():
-        if row['cve_id'] in G:
-            G.add_node(row['vulnerable_product'])
-            G.add_edge(row['cve_id'], row['vulnerable_product'])
-    
-    # Add vendor-product relationships
-    for _, row in vendor_products_df.iterrows():
-        G.add_node(row['vendor'])
-        G.add_node(row['product'])
-        G.add_edge(row['vendor'], row['product'])
-    
-    # Add vendor relationships
-    for _, row in vendors_df.iterrows():
-        if row['vendor'] in G:
-            G.add_edge(row['vendor'], row['cve_id'])
-    
-    print(f"✅ Graph created with {len(G.nodes)} nodes and {len(G.edges)} edges.")
     return G
 
-# Load CSV data
-cve_df, products_df, vendor_products_df, vendors_df = load_csv_data()
+G_nx = create_vulnerability_graph()
 
-# Create vulnerability graph
-G_nx = create_vulnerability_graph(cve_df, products_df, vendor_products_df, vendors_df)
+# ------------------------------------------------------------------------------
+# Step 2: Store the Graph in ArangoDB using nx_arangodb connection style.
+G_adb = nxadb.Graph(incoming_graph_data=G_nx, name="VulnerabilityGraph")
 
-# Analyze graph
-pagerank_scores = nx.pagerank(G_nx)
+# (Optional) Modify nodes/edges. For example, update a vulnerability's description.
+if "CVE-2024-1234" in G_adb.nodes:
+    G_adb.nodes["CVE-2024-1234"]["description"] = "Critical SQL injection vulnerability."
 
-# Generate vulnerability report
-def generate_vulnerability_report():
-    high_risk = [
-        node for node, data in G_nx.nodes(data=True) 
-        if isinstance(data.get("severity"), (int, float)) and float(data["severity"]) >= 7.0
-    ]
-    if high_risk:
-        return azure_chat(f"These vulnerabilities {high_risk} are critical. Suggest mitigations.")
-    return "✅ No high-risk vulnerabilities detected."
+# ------------------------------------------------------------------------------
+# Step 3: GPU-Accelerated Graph Analytics with CPU Fallback.
+def analyze_graph(graph):
+    """Compute PageRank using NVIDIA cuGraph if GPU is available, else use NetworkX."""
+    if torch.cuda.is_available():
+        print("Using GPU with cuGraph")
+        # Create a DataFrame of edges for cuGraph.
+        gdf = cudf.DataFrame(list(graph.edges()), columns=["source", "destination"])
+        G_cu = cugraph.Graph()
+        G_cu.from_cudf_edgelist(gdf, source="source", destination="destination")
+        pagerank_df = cugraph.pagerank(G_cu)
+        # Convert the cudf DataFrame to a dictionary.
+        pagerank_scores = {row["vertex"]: row["pagerank"] for row in pagerank_df.to_pandas().to_dict("records")}
+    else:
+        print("Using CPU with NetworkX")
+        pagerank_scores = nx.pagerank(graph)
+    return pagerank_scores
 
-# Generate report
-print("📢 Vulnerability Report:")
-print(generate_vulnerability_report())
+pagerank_scores = analyze_graph(G_nx)
+print("Pagerank Scores:", pagerank_scores)
 
-# Visualize the graph
-def visualize_graph(G):
-    if len(G.nodes) == 0:
-        print("⚠️ No nodes to visualize.")
-        return
-    print("🔹 Visualizing the graph...")
-    plt.figure(figsize=(12, 8))
-    pos = nx.spring_layout(G, seed=42)
-    nx.draw(G, pos, with_labels=True, node_color="skyblue", edge_color="gray", font_size=10, node_size=2000)
-    plt.savefig("graph.png")
-    print("✅ Graph saved as 'graph.png'. Opening now...")
-    plt.show()
+# Update the stored ArangoDB graph with PageRank values.
+for node, score in pagerank_scores.items():
+    if node in G_adb.nodes:
+        G_adb.nodes[node]["pagerank"] = score
 
-# Show graph
-visualize_graph(G_nx)
+# ------------------------------------------------------------------------------
+# Step 4: Query and Chat with the Graph using GraphRAG capabilities.
+# Instead of using the built-in chat method, we now use Azure OpenAI.
+azure_response = azure_chat("Hello, which vulnerability has the highest page rank value?")
+print("Azure OpenAI Response:", azure_response)
 
+# ------------------------------------------------------------------------------
+# Step 5: Define a tool to convert text to AQL and then back to text using Azure OpenAI.
+@tool
+def text_to_aql_to_text(query: str):
+    """
+    This tool translates a natural language query into AQL,
+    executes the query, and translates the result back into natural language.
+    Uses Azure OpenAI for language processing.
+    """
+    result = azure_chat(query)
+    return str(result)
 
-
+# Optionally, test the tool:
+print(text_to_aql_to_text("What vulnerabilities are present in the graph?"))
