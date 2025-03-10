@@ -1,101 +1,66 @@
 # CybersecurityAI: Threat Intelligence Navigator
 
 ## Overview
-CybersecurityAI leverages AI-driven graph analytics to map vulnerabilities, rank threats using GPU-accelerated PageRank, and provide real-time monitoring and NLP-based risk analysis.
+CybersecurityAI maps vulnerabilities using AI-driven graph analytics, ranking threats via GPU-accelerated PageRank. It enables real-time monitoring, NLP-driven risk analysis, and intelligent mitigation.
 
-## Features
-- **Graph-Based Threat Intelligence**: Utilizes ArangoDB, NetworkX, and cuGraph for advanced threat analytics.
-- **Natural Language Querying**: Supports AI-driven question-answering for cybersecurity insights.
-- **GPU-Accelerated Analysis**: Enhances processing speed using cuGraph.
-- **Hybrid Query Execution**: Combines traditional AQL with AI-powered queries.
-- **Visualization & Risk Dashboards**: Displays insights using graph visualizations.
-
-## Architecture Diagram
+## Architectural Diagram
 ```
-                +------------------------------------------------------+
-                |               User Interface (UI)                   |
-                |   (Web App / CLI / API for queries and visualization) |
-                +------------------------------------------------------+
-                                      │
-                                      ▼
-                +------------------------------------------------------+
-                |       Natural Language Processing (NLP)              |
-                |  - Azure OpenAI (GPT-based query interpretation)      |
-                |  - LangChain for query execution                      |
-                +------------------------------------------------------+
-                                      │
-                                      ▼
-          +-----------------------------------------------------------+
-          |       Graph-Based Threat Intelligence Engine              |
-          |  - ArangoDB (Graph database for storing vulnerabilities)  |
-          |  - NetworkX & cuGraph (Graph analytics and PageRank)      |
-          |  - ArangoGraphQAChain (Hybrid query processing)           |
-          +-----------------------------------------------------------+
-                                      │
-                                      ▼
-          +-----------------------------------------------------------+
-          |         Cybersecurity Data Processing Layer               |
-          |  - CVE Data Import (CSV, real-time feeds)                 |
-          |  - Data Enrichment (severity, exploitability analysis)    |
-          |  - Graph-based risk ranking (cuGraph PageRank)            |
-          +-----------------------------------------------------------+
-                                      │
-                                      ▼
-          +-----------------------------------------------------------+
-          |                   Visualization Layer                     |
-          |  - Graph-based visualization (ArangoDB UI, matplotlib)    |
-          |  - Risk dashboards (Severity heatmaps, ranking graphs)    |
-          +-----------------------------------------------------------+
++----------------------+     +---------------------+     +---------------------+
+|  User Input (NLP)   | --> | Azure OpenAI (GPT)  | --> | AQL Query Generator |
++----------------------+     +---------------------+     +---------------------+
+          |                              |                             |
+          v                              v                             v
++----------------------+     +---------------------+     +---------------------+
+|  ArangoDB Storage   | <-> | cuGraph Analytics   | <-> |  Graph Visualization |
++----------------------+     +---------------------+     +---------------------+
 ```
 
-## How It Works
-1. **User Query:** Users interact via web UI, CLI, or API.
-2. **NLP Processing:** Azure OpenAI interprets cybersecurity-related queries.
-3. **Graph Intelligence Engine:** ArangoDB and cuGraph process vulnerabilities and rank threats.
-4. **Data Processing:** CVE data is enriched, analyzed, and ranked based on exploitability and severity.
-5. **Visualization:** Users receive risk assessments via dashboards and graphs.
+## Installation
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/your-repo/cybersecurityai.git
+   cd cybersecurityai
+   ```
+2. Install dependencies:
+   ```sh
+   pip install -r requirements.txt
+   ```
+3. Set up environment variables:
+   ```sh
+   export DATABASE_HOST=<ArangoDB_Host>
+   export DATABASE_USERNAME=<Your_Username>
+   export DATABASE_PASSWORD=<Your_Password>
+   export OPENAI_API_KEY=<Your_Azure_OpenAI_Key>
+   ```
 
-## Installation & Setup
-### Prerequisites
-- Python 3.8+
-- ArangoDB
-- NetworkX & cuGraph
-- Azure OpenAI API Key
-
-### Installation Steps
-```sh
-# Clone repository
-git clone https://github.com/Jerryblessed/cybersecurityai.git
-cd CybersecurityAI
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment variables
-export OPENAI_API_KEY="your-azure-api-key"
-export DATABASE_HOST="https://arangodb-host"
-export DATABASE_USERNAME="your-username"
-export DATABASE_PASSWORD="your-password"
-
-# Run the application
-python main.py
-```
+## Getting ArangoDB Temporary Storage Credentials
+To obtain temporary credentials for ArangoDB storage, visit:
+[ArangoDB Cloud Connector](https://github.com/arangodb/adb-cloud-connector?tab=readme-ov-file#arangodb-cloud-connector)
 
 ## Usage
-- Query cybersecurity risks: `python query.py "What is the most critical vulnerability?"`
-- Visualize threat rankings: `python visualize.py`
+1. Run the application:
+   ```sh
+   python main.py
+   ```
+2. Query the system for vulnerabilities:
+   ```sh
+   python query.py "Find the most critical vulnerabilities"
+   ```
 
-## Challenges & Learnings
-- **Challenges**: Implementing GPU acceleration efficiently, optimizing AQL queries.
-- **Learnings**: Effective hybrid querying using AI and AQL, optimizing large-scale graph traversal.
+## Features
+- **AI-powered Threat Detection**: Uses GPT-based NLP to analyze vulnerabilities.
+- **Graph-based Risk Analysis**: Employs ArangoDB and cuGraph for advanced graph analytics.
+- **Real-time Monitoring**: Tracks and updates threats dynamically.
+- **Interactive Visualization**: Displays threat intelligence insights in an intuitive manner.
 
 ## Future Improvements
-- Real-time threat detection using streaming data.
-- Integration with security incident response systems.
-- Enhanced AI-driven risk mitigation strategies.
+- Integration with real-time threat intelligence feeds.
+- Support for additional graph-based anomaly detection models.
+- Enhanced visualization with interactive dashboards.
 
-## Contributors
-- Jeremiah Ope
+## Contributing
+Contributions are welcome! Feel free to fork the repo and submit pull requests.
 
 ## License
-MIT License
+This project is licensed under the MIT License.
+
