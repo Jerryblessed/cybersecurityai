@@ -1,1 +1,1 @@
-Use the colab file and use credentials
+Use the colab file and input arangodb credentials
