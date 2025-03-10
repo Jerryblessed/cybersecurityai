@@ -14,8 +14,7 @@ CybersecurityAI maps vulnerabilities using AI-driven graph analytics, ranking th
 |  ArangoDB Storage   | <-> | cuGraph Analytics   | <-> |  Graph Visualization |
 +----------------------+     +---------------------+     +---------------------+
 ```
-
-## Installation
+## Installation of test python
 1. Clone the repository:
    ```sh
    git clone https://github.com/your-repo/cybersecurityai.git
@@ -24,6 +23,25 @@ CybersecurityAI maps vulnerabilities using AI-driven graph analytics, ranking th
 2. Install dependencies:
    ```sh
    pip install -r requirements.txt
+   ```
+3. Set up environment variables:
+   ```sh
+   export DATABASE_HOST=<ArangoDB_Host>
+   export DATABASE_USERNAME=<Your_Username>
+   export DATABASE_PASSWORD=<Your_Password>
+   export OPENAI_API_KEY=<Your_Azure_OpenAI_Key>
+   ```
+
+
+## Installation of notebook
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/your-repo/cybersecurityai.git
+   cd cybersecurityai
+   ```
+2. Install dependencies:
+   ```sh
+   run the notebooks line by line starting from connecting to colab and then using !pip to install dependancies
    ```
 3. Set up environment variables:
    ```sh
