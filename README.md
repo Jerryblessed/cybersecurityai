@@ -61,6 +61,12 @@ CybersecurityAI maps vulnerabilities using AI-driven graph analytics, ranking th
    os.environ['OPENAI_API_KEY'] = '<Your_Azure_OpenAI_Key>'
    ```
 
+## Important Note on API Keys
+The **Azure OpenAI API key** has been **intentionally left for testing purposes**. However, to ensure security and avoid unauthorized usage, **users who wish to test the system must renew the ArangoDB credentials from the temporary cloud version**.
+
+To obtain new ArangoDB storage credentials, visit:  
+[ArangoDB Cloud Connector](https://github.com/arangodb/adb-cloud-connector?tab=readme-ov-file#arangodb-cloud-connector)
+
 ## Getting ArangoDB Temporary Storage Credentials
 To obtain temporary credentials for ArangoDB storage, visit:
 [ArangoDB Cloud Connector](https://github.com/arangodb/adb-cloud-connector?tab=readme-ov-file#arangodb-cloud-connector)
